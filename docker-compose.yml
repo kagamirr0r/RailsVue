@@ -1,0 +1,42 @@
+version: '3.2'
+services:
+  db:
+    image: postgres:13-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: kagamirr0r
+      POSTGRES_PASSWORD: password
+    volumes:
+      - datavol:/var/lib/postgresql/data
+  api:
+    build: api
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      - type: bind
+        source: ./api
+        target: /app/api
+        consistency: cached
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+  vue:
+    build: vue
+    command: bash -c "yarn install && yarn serve"
+    ports:
+      - 1234:8080
+      - 8000:8000
+    volumes:
+      - type: bind
+        source: ./vue
+        target: /app/vue
+        consistency: cached
+      - type: bind
+        source: ./.yarn-cache
+        target: /usr/local/share/.cache/yarn/v6
+        consistency: cached
+    stdin_open: true
+    tty: true
+volumes:
+  datavol:
